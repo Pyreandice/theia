@@ -15,7 +15,7 @@ public:
 
 private:
   char delimiter = ':';
-  time_t timeCreated;
+  std::string timeCreated;
 };
 
 #endif

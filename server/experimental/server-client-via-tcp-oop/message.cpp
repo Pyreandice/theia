@@ -2,6 +2,9 @@
 
 #include <cstdlib>
 #include <string>
+#include <cstring>
+
+#include <iostream>
 
 Message::Message()
 {
@@ -10,23 +13,28 @@ Message::Message()
 
 Message::Message(std::string buffer)
 {
-  int bufferSize = buffer.length();
+  int bufferSize = buffer.size();
   int bufferStart = 0;
 
   for(int bufferIndex = 0; bufferIndex < bufferSize; bufferIndex++)
   {
-    if(bufferStart != bufferIndex)
+    if(buffer[bufferIndex] == ':')
     {
-      if(buffer[bufferIndex] == ':')
-      {
-        int equal;
-        std::string key = buffer.substr(0, buffer.find("=") - 1);
-        std::string value = buffer.substr(equal + 1);
+      std::string subBuffer = buffer.substr(bufferStart, bufferIndex - bufferStart - 1);
 
-        this->process(key, value);
-      }
+      int equal = subBuffer.find("=");
+      std::string key = subBuffer.substr(0, equal);
+      std::string value = subBuffer.substr(equal + 1);
+
+      std::cout << key << " - " << value << std::endl;
+
+      this->process(key, value);
+
+      bufferStart = bufferIndex + 1;
     }
   }
+
+  std::cout << this->timeCreated << std::endl;
 }
 
 Message::~Message()
@@ -38,7 +46,7 @@ void Message::process(std::string key, std::string value)
 {
   if(key == "timeCreated")
   {
-    this->timeCreated = (time_t) std::stoi(value);
+    this->timeCreated = value;
   }
   else if(key == "")
   {
@@ -48,7 +56,17 @@ void Message::process(std::string key, std::string value)
 
 char * Message::toBuffer()
 {
-  char buffer[128];
-  buffer[0] = 'f';
+  int bufferSize = 0;
+  bufferSize += std::string("timeCreated").size();
+  bufferSize += (this->timeCreated).size();
+
+  std::string bufferString = "";
+  bufferString += "timeCreated=";
+  bufferString += std::string(this->timeCreated);
+  bufferString += ":";
+
+  char buffer[bufferSize + 1] = "";
+  strcpy(buffer, bufferString.c_str());
+
   return buffer;
 }
