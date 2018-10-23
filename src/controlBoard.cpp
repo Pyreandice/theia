@@ -36,48 +36,20 @@ ControlBoard::~ControlBoard()
   this->memory = NULL;
   delete this->memory;
 }
-void ControlBoard::handleResponse(char * message)
+
+void ControlBoard::handleClientResponse(char * message)
+{
+
+}
+
+void ControlBoard::handleServerResponse(char * message)
 {
   char * operation = std::strtok(message, " ");
 
-  if(operation == "LOGIN")
+  if(operation == "HELLO")
   {
     operation = std::strtok(NULL, " ");
 
     int memoryStage = std::stoi(operation);
-
-    if(memoryStage >= 0 && memoryStage < this->memoryStages)
-    {
-      //test if user is valid
-      operation = std::strtok(NULL, " ");
-
-      if(operation == this->memory[memoryStage][0])
-      {
-        return "";
-      }
-    }
   }
-
-  if(operation == "LOGIN")
-  {
-    operation = std::strtok(NULL, " ");
-
-    if(operation == "PROOF")
-    {
-      operation = std::strtok(NULL, " ");
-
-      if(operation == std::getenv("SECRET"))
-      {
-        this->clients++;
-        return "LOGIN SUCCESS " << (this->clients - 1);
-      }
-    }
-    else if(operation == "SUCCESS")
-    {
-      operation = std::strtok(NULL, " ");
-
-
-    }
-  }
-
 }

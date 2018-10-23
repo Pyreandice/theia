@@ -16,7 +16,9 @@ public:
   int memoryStages = maxClients;
   int memorySize = 256;
 
-  std::string handleResponse(std::string message);
+  void handleResponse(char * message);
+  void handleClientResponse(char * message)
+
 private:
 
 };
