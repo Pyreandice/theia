@@ -1,5 +1,4 @@
-#include "./server.h"
-#include "./message.h"
+#include "./socket.h"
 
 //original libs
 #include <stdio.h>
@@ -8,7 +7,6 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
 
 //c to c++ req
 #include <cstdlib>
@@ -21,7 +19,53 @@
 
 Socket::Socket()
 {
-  this->init();
+  this->parentSocket = socket(AF_INET, SOCK_STREAM, 0);
+
+  if(this->parentSocket < 0)
+  {
+    error("ERROR opening socket");
+  }
+
+  bzero((char *) &this->serverAddress, sizeof(this->serverAddress));
+
+  this->serverAddress.sin_family = AF_INET;
+  this->serverAddress.sin_addr.s_addr = INADDR_ANY;
+  this->serverAddress.sin_port = htons(this->getPortNumber());
+}
+
+Socket::Socket(int bufferSize)
+{
+  this->bufferSize = bufferSize;
+  this->parentSocket = socket(AF_INET, SOCK_STREAM, 0);
+
+  if(this->parentSocket < 0)
+  {
+    error("ERROR opening socket");
+  }
+
+  bzero((char *) &this->serverAddress, sizeof(this->serverAddress));
+
+  this->serverAddress.sin_family = AF_INET;
+  this->serverAddress.sin_addr.s_addr = INADDR_ANY;
+  this->serverAddress.sin_port = htons(this->getPortNumber());
+}
+
+Socket::Socket(int bufferSize, int portNumber)
+{
+  this->bufferSize = bufferSize;
+  this->portNumber = portNumber;
+  this->parentSocket = socket(AF_INET, SOCK_STREAM, 0);
+
+  if(this->parentSocket < 0)
+  {
+    error("ERROR opening socket");
+  }
+
+  bzero((char *) &this->serverAddress, sizeof(this->serverAddress));
+
+  this->serverAddress.sin_family = AF_INET;
+  this->serverAddress.sin_addr.s_addr = INADDR_ANY;
+  this->serverAddress.sin_port = htons(this->getPortNumber());
 }
 
 Socket::~Socket()
@@ -69,22 +113,6 @@ void Socket::setPortNumber(int portNumber)
   this->portNumber = portNumber;
 }
 
-void Socket::init()
-{
-  this->parentSocket = socket(AF_INET, SOCK_STREAM, 0);
-
-  if(this->parentSocket < 0)
-  {
-    error("ERROR opening socket");
-  }
-
-  bzero((char *) &this->serverAddress, sizeof(this->serverAddress));
-
-  this->serverAddress.sin_family = AF_INET;
-  this->serverAddress.sin_addr.s_addr = INADDR_ANY;
-  this->serverAddress.sin_port = htons(this->getPortNumber());
-}
-
 void Socket::bind()
 {
   if(::bind(this->parentSocket, (struct sockaddr *) &this->serverAddress, sizeof(this->serverAddress)) < 0)
@@ -117,28 +145,36 @@ int Socket::accept()
   return this->childrenSockets[nextChildSocketKey];
 }
 
-Message Socket::read(int socket)
+void Socket::read(int socket, char * message)
 {
-  char buffer[this->bufferSize];
-
-  if(::read(socket, buffer, bufferSize - 1) < 0)
+  if(::read(socket, message, bufferSize - 1) < 0)
   {
     this->error("ERROR reading from socket");
   }
-
-  std::string message = buffer;
-  return Message(message);
 }
 
-void Socket::write(int socket, Message message)
+void Socket::write(int socket, char * message)
 {
-  char test[128];
-  char * buffer = test;
-
-  if(::write(socket, buffer, sizeof(buffer)) < 0)
+  if(::write(socket, message, sizeof(message)) < 0)
   {
     this->error("ERROR writing to socket");
   }
+}
+
+int Socket::connect(int socket)
+{
+  int thisChildSocketKey = this->childrenSocketsKey;
+  socklen_t serverTypeLength = sizeof(this->getServerAddress());
+
+  this->childrenSockets[this->childrenSocketsKey] = ::connect(this->parentSocket, (struct sockaddr *) &this->serverAddress, serverTypeLength);
+
+  if(this->childrenSockets[this->childrenSocketsKey] < 0)
+  {
+    this->error("ERROR accepting queued socket");
+  }
+
+  this->childrenSocketsKey++;
+  return this->childrenSockets[thisChildSocketKey];
 }
 
 void Socket::close(int socket)
@@ -160,36 +196,4 @@ void Socket::error(std::string message)
 void Socket::clearAddress()
 {
   bzero((char *) &this->serverAddress, sizeof(this->serverAddress));
-}
-
-void Socket::serverLoop()
-{
-  while(1)
-  {
-    std::cout << "accepting connections" << std::endl;
-
-    int socketKey = this->accept();
-
-    std::cout << "accepted connection" << std::endl;
-
-    pid_t pid = fork();
-
-    //child
-    if(pid == 0)
-    {
-      this->clientLoop(socketKey);
-    }
-  }
-}
-
-void Socket::clientLoop(int socketKey)
-{
-  while(1)
-  {
-    std::cout << "reading from client" << std::endl;
-    Message message = this->read(socketKey);
-
-    std::cout << "writing to client" << std::endl;
-    this->write(socketKey, message);
-  }
 }

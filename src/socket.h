@@ -4,7 +4,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <string>
-#include "./message.h"
+#include "./controlBoard.h"
 
 class Socket
 {
@@ -25,24 +25,21 @@ public:
   void setClientAddress(struct sockaddr_in clientAdress);
 
   //default socket operations
-  void init();
   void bind();
   void listen();
   int accept();
-  Message read(int socket);
-  void write(int socket, Message message);
+  void read(int socket, char * message);
+  void write(int socket, char * message);
   void close(int socket);
+  int connect(int socket);
 
   //custom socket operations
   void error(std::string message);
   void clearBuffer();
   void clearAddress();
-  void serverLoop();
-  void clientLoop(int socketKey);
 
-private:
   int bufferSize = 1024;
-  int portNumber = 8080;
+  int portNumber = 8000;
   int parentSocket;
 
   struct sockaddr_in serverAddress;
@@ -51,6 +48,7 @@ private:
   int childrenSocketsKey = 0;
   int const static maxConnectionRequests = 32;
   int childrenSockets[maxConnectionRequests];
+  ControlBoard controlBoard;
 };
 
 #endif

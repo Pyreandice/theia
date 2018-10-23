@@ -2,8 +2,9 @@ version: '3.3'
 services:
   server:
     build:
-      context: server
+      context: docker/server
       dockerfile: Dockerfile
     volumes:
-      - ./server:/var/cpp/
+      - ./src:/var/project/src/
+      - ./.git:/var/project/.git/
     env_file: .env
