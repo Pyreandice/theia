@@ -7,7 +7,18 @@ class Server: public Socket
 {
 public:
   void serverLoop();
-  void serverRespondLoop(int socketKey);
+  void serverRespondLoop();
+
+  bool handleMessage(char * message);
+
+  void issueRequest(char * message);
+  void issueResponse(char * message);
+  void handleRequest(char * message);
+  void handleResponse(char * message);
+
+  std::string getSubString(const char * haystack, int start, int end);
+
+  int clientFileDescriptor;
 };
 
 #endif

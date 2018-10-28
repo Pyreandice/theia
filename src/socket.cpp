@@ -147,15 +147,17 @@ int Socket::accept()
 
 void Socket::read(int socket, char * message)
 {
-  if(::read(socket, message, bufferSize - 1) < 0)
+  if(::read(socket, message, this->bufferSize - 1) < 0)
   {
     this->error("ERROR reading from socket");
   }
+
+  std::cout << "read in: " << message;
 }
 
 void Socket::write(int socket, char * message)
 {
-  if(::write(socket, message, sizeof(message)) < 0)
+  if(::write(socket, message, this->bufferSize - 1) < 0)
   {
     this->error("ERROR writing to socket");
   }

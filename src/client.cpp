@@ -25,8 +25,6 @@ void Client::clientLoop()
 
     this->read(this->parentSocket, buffer);
 
-    std::cout << buffer;
-
     socklen_t serverTypeLength = sizeof(this->getServerAddress());
     if(getpeername(this->parentSocket, (struct sockaddr *) &this->clientAddress, &serverTypeLength) < 0)
     {

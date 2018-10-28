@@ -1,2 +1,2 @@
 #!/bin/bash
-g++ socket.cpp server.cpp controlBoard.cpp serverTest.cpp -o server
+g++ socket.cpp server.cpp serverTest.cpp -o server -std=c++11
