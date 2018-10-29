@@ -3,7 +3,10 @@
 #include <iostream>
 #include <unistd.h>
 #include <cstring>
-
+#include <bits/stdc++.h>
+#include <chrono>
+#include <fstream>
+#include <streambuf>
 
 void Server::serverLoop()
 {
@@ -140,8 +143,68 @@ bool Server::handleMessage(char * message)
   // - SERVER WRITES EXPORT TO CLIENT
   // - ARGS:
   //    - TYPE - TYPE OF EXPORT CLIENT SHOULD PERFORM
-  
+
   std::string command = this->getSubString(message, 1, 12);
+
+  std::cout << "command: " << command << std::endl;
+
+  if(command == "HELLO")
+  {
+    //init local variables
+    std::string fileName;
+    std::string commandString;
+
+    //generate key pair unique temp fileName
+    std::chrono::system_clock::time_point tp = std::chrono::system_clock::now();
+    std::chrono::system_clock::duration dtn = tp.time_since_epoch();
+    fileName = dtn.count();
+
+    //generate key pair
+    commandString = "ssh-keygen -t rsa -N "" -f /tmp/" + fileName + ".ppk";
+    const char * keyGenCommand = commandString.c_str();
+    system(keyGenCommand);
+    keyGenCommand = NULL;
+    delete keyGenCommand;
+
+    //get private key into server memory
+    std::ifstream privateKeyFile(fileName + ".ppk");
+    privateKeyFile.seekg(0, std::ios::end);
+    //this->privateKey.reserve(privateKeyFile.tellg());
+    privateKeyFile.seekg(0, std::ios::beg);
+    //this->privateKey.assign((std::istreambuf_iterator<char>(privateKeyFile)), std::istreambuf_iterator<char>());
+
+    //get public key into server memory
+    std::ifstream publicKeyFile(fileName + ".ppk.pub");
+    publicKeyFile.seekg(0, std::ios::end);
+    //this->publicKey.reserve(publicKeyFile.tellg());
+    publicKeyFile.seekg(0, std::ios::beg);
+    //this->publicKey.assign((std::istreambuf_iterator<char>(publicKeyFile)), std::istreambuf_iterator<char>());
+
+    //remove generated key pair
+    commandString = "rm /tmp/" + fileName + ".*";
+    const char * rmTempFilesCommand = commandString.c_str();
+    system(rmTempFilesCommand);
+    rmTempFilesCommand = NULL;
+    delete rmTempFilesCommand;
+
+    //send HELLO back to client with generated public key
+  }
+  else if(command == "AUTH")
+  {
+
+  }
+  else if(command == "SET")
+  {
+
+  }
+  else if(command == "GET")
+  {
+
+  }
+  else
+  {
+    //return FAILURE [reason="did not understand command"]
+  }
 
   this->write(this->clientFileDescriptor, message);
 
