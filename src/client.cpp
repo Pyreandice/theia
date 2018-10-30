@@ -18,11 +18,9 @@ void Client::clientLoop()
 
     bzero(buffer, this->bufferSize);
     fgets(buffer, this->bufferSize - 1, stdin);
-
     this->write(this->parentSocket, buffer);
 
     std::cout << "waiting to read from server" << std::endl;
-
     this->read(this->parentSocket, buffer);
 
     socklen_t serverTypeLength = sizeof(this->getServerAddress());
@@ -35,4 +33,9 @@ void Client::clientLoop()
     printf("Peer's port: %d\n", (int) ntohs(this->serverAddress.sin_port));
     printf("Peer's message: %s\n", buffer);
   }
+}
+
+void Client::taskLoop()
+{
+
 }

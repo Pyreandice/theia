@@ -36,6 +36,7 @@ public:
   void error(std::string message);
   void clearBuffer();
   void clearAddress();
+  int getFirstEmptySocketSlot();
 
   int bufferSize = 2048;
   int portNumber = 8000;
@@ -44,9 +45,8 @@ public:
   struct sockaddr_in serverAddress;
   struct sockaddr_in clientAddress;
 
-  int childrenSocketsKey = 0;
   int const static maxConnectionRequests = 32;
-  int childrenSockets[maxConnectionRequests];
+  int sockets[maxConnectionRequests];
 };
 
 #endif

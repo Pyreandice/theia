@@ -1,3 +1,5 @@
 .env
 root/*
 !root/.gitkeep
+src/client
+src/server

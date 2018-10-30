@@ -29,6 +29,8 @@ void Server::serverLoop()
 
 void Server::serverRespondLoop()
 {
+  std::cout << this->clientFileDescriptor << std::endl;
+
   char message[this->bufferSize];
   bool active = true;
 
