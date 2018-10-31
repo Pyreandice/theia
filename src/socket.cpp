@@ -85,7 +85,14 @@ Socket::Socket(int bufferSize, int portNumber)
 
 Socket::~Socket()
 {
-  //this->close();
+  //close all defined sockets
+  for(int z = 0;z < this->maxConnectionRequests;z++)
+  {
+    if(this->sockets[z] > -1)
+    {
+      this->close(this->sockets[z]);
+    }
+  }
 }
 
 int Socket::getBufferSize()
