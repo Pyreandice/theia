@@ -4,7 +4,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <string>
-#include "./controlBoard.h"
 
 class Socket
 {
@@ -37,18 +36,17 @@ public:
   void error(std::string message);
   void clearBuffer();
   void clearAddress();
+  int getFirstEmptySocketSlot();
 
-  int bufferSize = 1024;
+  int bufferSize = 2048;
   int portNumber = 8000;
   int parentSocket;
 
   struct sockaddr_in serverAddress;
   struct sockaddr_in clientAddress;
 
-  int childrenSocketsKey = 0;
   int const static maxConnectionRequests = 32;
-  int childrenSockets[maxConnectionRequests];
-  ControlBoard controlBoard;
+  int sockets[maxConnectionRequests];
 };
 
 #endif

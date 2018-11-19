@@ -7,6 +7,10 @@ class Client: public Socket
 {
 public:
   void clientLoop();
+  void taskLoop();
+
+  std::string privateKey;
+  std::string publicKey;
 };
 
 #endif

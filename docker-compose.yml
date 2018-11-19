@@ -7,4 +7,5 @@ services:
     volumes:
       - ./src:/var/project/src/
       - ./.git:/var/project/.git/
+      - ./root:/root/
     env_file: .env

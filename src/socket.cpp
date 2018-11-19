@@ -23,7 +23,7 @@ Socket::Socket()
 
   if(this->parentSocket < 0)
   {
-    error("ERROR opening socket");
+    this->error("ERROR opening socket");
   }
 
   bzero((char *) &this->serverAddress, sizeof(this->serverAddress));
@@ -31,6 +31,11 @@ Socket::Socket()
   this->serverAddress.sin_family = AF_INET;
   this->serverAddress.sin_addr.s_addr = INADDR_ANY;
   this->serverAddress.sin_port = htons(this->getPortNumber());
+
+  for(int z = 0;z < this->maxConnectionRequests;z++)
+  {
+    this->sockets[z] = -1;
+  }
 }
 
 Socket::Socket(int bufferSize)
@@ -40,7 +45,7 @@ Socket::Socket(int bufferSize)
 
   if(this->parentSocket < 0)
   {
-    error("ERROR opening socket");
+    this->error("ERROR opening socket");
   }
 
   bzero((char *) &this->serverAddress, sizeof(this->serverAddress));
@@ -48,6 +53,11 @@ Socket::Socket(int bufferSize)
   this->serverAddress.sin_family = AF_INET;
   this->serverAddress.sin_addr.s_addr = INADDR_ANY;
   this->serverAddress.sin_port = htons(this->getPortNumber());
+
+  for(int z = 0;z < this->maxConnectionRequests;z++)
+  {
+    this->sockets[z] = -1;
+  }
 }
 
 Socket::Socket(int bufferSize, int portNumber)
@@ -58,7 +68,7 @@ Socket::Socket(int bufferSize, int portNumber)
 
   if(this->parentSocket < 0)
   {
-    error("ERROR opening socket");
+    this->error("ERROR opening socket");
   }
 
   bzero((char *) &this->serverAddress, sizeof(this->serverAddress));
@@ -66,11 +76,23 @@ Socket::Socket(int bufferSize, int portNumber)
   this->serverAddress.sin_family = AF_INET;
   this->serverAddress.sin_addr.s_addr = INADDR_ANY;
   this->serverAddress.sin_port = htons(this->getPortNumber());
+
+  for(int z = 0;z < this->maxConnectionRequests;z++)
+  {
+    this->sockets[z] = -1;
+  }
 }
 
 Socket::~Socket()
 {
-  //this->close();
+  //close all defined sockets
+  for(int z = 0;z < this->maxConnectionRequests;z++)
+  {
+    if(this->sockets[z] > -1)
+    {
+      this->close(this->sockets[z]);
+    }
+  }
 }
 
 int Socket::getBufferSize()
@@ -131,31 +153,34 @@ void Socket::listen()
 
 int Socket::accept()
 {
-  int nextChildSocketKey = this->childrenSocketsKey;
-
   socklen_t clientTypeLength = sizeof(this->getClientAddress());
-  this->childrenSockets[this->childrenSocketsKey] = ::accept(this->parentSocket, (struct sockaddr *) &this->clientAddress, &clientTypeLength);
+  int acceptedSocket = ::accept(this->parentSocket, (struct sockaddr *) &this->clientAddress, &clientTypeLength);
 
-  if(this->childrenSockets[this->childrenSocketsKey] < 0)
+  if(acceptedSocket < 0)
   {
     this->error("ERROR accepting queued socket");
   }
 
-  this->childrenSocketsKey++;
-  return this->childrenSockets[nextChildSocketKey];
+  this->sockets[this->getFirstEmptySocketSlot()] = acceptedSocket;
+
+  std::cout << "accepted socket fd: " << acceptedSocket << std::endl;
+
+  return acceptedSocket;
 }
 
 void Socket::read(int socket, char * message)
 {
-  if(::read(socket, message, bufferSize - 1) < 0)
+  if(::read(socket, message, this->bufferSize - 1) < 0)
   {
     this->error("ERROR reading from socket");
   }
+
+  std::cout << "read in: " << message;
 }
 
 void Socket::write(int socket, char * message)
 {
-  if(::write(socket, message, sizeof(message)) < 0)
+  if(::write(socket, message, this->bufferSize - 1) < 0)
   {
     this->error("ERROR writing to socket");
   }
@@ -163,18 +188,18 @@ void Socket::write(int socket, char * message)
 
 int Socket::connect(int socket)
 {
-  int thisChildSocketKey = this->childrenSocketsKey;
   socklen_t serverTypeLength = sizeof(this->getServerAddress());
+  int connectedSocket = ::connect(socket, (struct sockaddr *) &this->serverAddress, serverTypeLength);
 
-  this->childrenSockets[this->childrenSocketsKey] = ::connect(this->parentSocket, (struct sockaddr *) &this->serverAddress, serverTypeLength);
-
-  if(this->childrenSockets[this->childrenSocketsKey] < 0)
+  if(connectedSocket < 0)
   {
     this->error("ERROR accepting queued socket");
   }
 
-  this->childrenSocketsKey++;
-  return this->childrenSockets[thisChildSocketKey];
+  this->sockets[this->getFirstEmptySocketSlot()] = connectedSocket;
+
+  std::cout << "connected socket fd: " << connectedSocket << std::endl;
+  return connectedSocket;
 }
 
 void Socket::close(int socket)
@@ -182,6 +207,14 @@ void Socket::close(int socket)
   if(::close(socket) < 0)
   {
     this->error("ERROR closing socket");
+  }
+
+  for(int z = 0;z < this->maxConnectionRequests;z++)
+  {
+    if(this->sockets[z] == socket)
+    {
+      this->sockets[z] = -1;
+    }
   }
 }
 
@@ -196,4 +229,21 @@ void Socket::error(std::string message)
 void Socket::clearAddress()
 {
   bzero((char *) &this->serverAddress, sizeof(this->serverAddress));
+}
+
+int Socket::getFirstEmptySocketSlot()
+{
+  //"round robin" selection
+  for(int z = 0;z < this->maxConnectionRequests;z++)
+  {
+    std::cout << "key: " << z << " , sockets[z]: " << this->sockets[z] << std::endl;
+
+    // -1 = empty
+    if(this->sockets[z] < 0)
+    {
+      return z;
+    }
+  }
+
+  this->error("SOCKET ARRAY FULL");
 }
